@@ -35,6 +35,7 @@ class ThreadedServer(object):
 
             ## Respondo al cliente
             size = 1024
+            client.send("Init Session")
             user = client.recv(size)
             if user in self.access_list:
                 client.send('OK')
