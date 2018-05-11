@@ -24,6 +24,10 @@ s.connect((TCP_IP, int(TCP_PORT)))
 
 
 print '------------------------------------'
+init_message = s.recv(BUFFER_SIZE)
+print '------------------------------------'
+print init_message
+print '------------------------------------'
 user = raw_input('Introduce User: ')
 s.send(user)
 response = s.recv(BUFFER_SIZE)
