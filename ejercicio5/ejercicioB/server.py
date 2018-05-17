@@ -5,6 +5,8 @@ import threading
 import os
 import time
 
+from framed_socket import FramedSocket
+
 ##############################################
 ## Clase que para armar un servidor Ethernet
 ##############################################
@@ -13,7 +15,7 @@ class ThreadedServer(object):
         self.host = host
         self.port = port
         ## Definicion el tipo de protocolo (IPv4) y el tipo de socket
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = FramedSocket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.host, self.port))
 
@@ -39,48 +41,70 @@ class ThreadedServer(object):
             user = client.recv(size)
             if user in self.access_list:
                 client.send('OK')
-                self.loadDic(client, user, True)
+                self.log_connection(client, user, True)
             else:
                 client.send('FAIL')
-                self.loadDic(client, user, False)
+                self.log_connection(client, user, False)
             ## Abro un hilo
-            threading.Thread(target = self.listenToClient,args = (client,address, user)).start()
+            threading.Thread(target=self.listenToClient, 
+                             args=(client,address, user)).start()
 
 
     ## Metodo de respuesta
     def listenToClient(self, client, address, user):
         size = 1024
+        date = time.strftime("%d_%b_%Y-%H:%M:%S", time.gmtime()) 
+        file_name = "%s_%s"%(user, date)
+
         while True:
             try:
                 data = client.recv(size)
                 if data:
+                    self.log_communication(file_name, client, user, data,
+                                           send=False)
                     response = data
                     client.send(response)
+                    self.log_communication(file_name, client, user, response,
+                                           send=True)
                 else:
                     raise error('Client disconnected')
 
             except:
-                self.filep = open('logs_session.txt','a')
-                self.filep.write('%s\tClose -> '%\
-                                 time.strftime("%d %b %Y - %H:%M:%S", 
-                                               time.gmtime()) + 
-                                '%s '%str(client) +
-                                'User -> %s\n'%user)
-                self.filep.close()
-
+                self.log_disconnection(client, user)
                 client.close()
                 return False
 
     ## Metodo de escritudo por inicio de sesion
-    def loadDic(self,clientN, user, allowed=True):
+    def log_connection(self,client, user, allowed=True):
         self.filep = open('logs_session.txt','a')
         if allowed: allowed = 'ALLOWED'
         else: allowed = 'NOT ALLOWED'
         self.filep.write('%s\tOpen  -> '%\
                          (time.strftime("%d %b %Y - %H:%M:%S", 
                                         time.gmtime())) + 
-                        '%s '%str(clientN) +
+                        '%s '%str(client) +
                         'User -> %s '%user + allowed + '\n')
+        self.filep.close()
+
+    def log_disconnection(self, client, user):
+        self.filep = open('logs_session.txt','a')
+        self.filep.write('%s\tClose -> '%\
+                         time.strftime("%d %b %Y - %H:%M:%S", 
+                                       time.gmtime()) + 
+                        '%s '%str(client) +
+                        'User -> %s\n'%user)
+        self.filep.close()
+        
+    def log_communication(self, file_name, client, user, data, send):
+        if send: direction = "SEND   "
+        else: direction    = "RECEIVE"
+        self.filep = open(file_name, 'a')
+        self.filep.write('%s' % time.strftime("%d %b %Y - %H:%M:%S", 
+                                             time.gmtime()) 
+                         + '\t%s ->' % direction
+                         + '%s '%str(client) 
+                         + 'User -> %s'%user
+                         + '-> Data: %s \n' % data)
         self.filep.close()
 
 

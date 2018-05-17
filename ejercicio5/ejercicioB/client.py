@@ -2,6 +2,8 @@
 
 import socket
 
+from framed_socket import FramedSocket
+
 TCP_IP   = '127.0.0.1'
 TCP_PORT = 5005
 
@@ -18,7 +20,7 @@ print '------------------------------------'
 ##################################
 ## Inicializacion del socket
 ##################################
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = FramedSocket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, int(TCP_PORT)))
 #s.settimeout(None)
 
