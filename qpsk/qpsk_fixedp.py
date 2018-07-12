@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from commpy.filters import rrcosfilter, rcosfilter
 
 from tool._fixedInt import *
@@ -17,6 +18,8 @@ UPSAMPLE = 4
 BAUD_RATE = 25e6
 SAMPLE_RATE = BAUD_RATE*UPSAMPLE
 
+TX_OFFSET = 3
+
 
 prbs_r_v = []
 prbs_i_v = []
@@ -26,8 +29,8 @@ tx_r_in = [0]*NBAUDS*UPSAMPLE
 tx_i_in = [0]*NBAUDS*UPSAMPLE
 rx_r_v = []
 rx_i_v = []
-rx_r_in = [0]*NBAUDS*UPSAMPLE
-rx_i_in = [0]*NBAUDS*UPSAMPLE
+rx_r_in = [DeFixedInt(32,16)]*NBAUDS*UPSAMPLE
+rx_i_in = [DeFixedInt(32,16)]*NBAUDS*UPSAMPLE
 
 
 def prbs9(seed):    
@@ -36,9 +39,21 @@ def prbs9(seed):
     prbs = (((prbs_9^0b1^prbs_5)<<9) + seed>>1)
     return prbs
 
-def coef_mult(coef, values):
-    print coef, values
-    return np.inner(coef, values)
+
+def conv_tx(coef, values, clk, offset, upsample):
+    coef = coef[(clk+offset)%4::upsample]
+    values = values[(clk+offset)%4::upsample]
+    out = DeFixedInt(32,16)
+    for c, v in zip(coef, values):
+        if v==1: out.value = (out+c).fValue
+        else: out.value = (out-c).fValue
+    return out
+
+def conv_rx(coef, values):
+    out = DeFixedInt(32,16)
+    for c, v in zip(coef, values):
+        out.value = (out+(c*v)).fValue
+    return out
     
     
     
@@ -69,28 +84,30 @@ def main():
 
         #TX
         if tx_enable:
-            coef = rrcos[clk%4::UPSAMPLE]
-            values_r = tx_r_in[clk%4::UPSAMPLE]
-            values_i = tx_i_in[clk%4::UPSAMPLE]
-            tx_r_v.append(coef_mult(coef, values_r))
-            tx_i_v.append(coef_mult(coef, values_i))
+            tx_r_v.append(conv_tx(rrcos_fixed, tx_r_in, clk, TX_OFFSET, UPSAMPLE))
+            tx_i_v.append(conv_tx(rrcos_fixed, tx_i_in, clk, TX_OFFSET, UPSAMPLE))
             tx_r_in.insert(0, prbs_r_v[-1])
             tx_r_in.pop()
             tx_i_in.insert(0, prbs_i_v[-1])
             tx_i_in.pop()
 
         if rx_enable:
-            coef = rrcos[clk%4::UPSAMPLE]
-            values_r = rx_r_in[clk%4::UPSAMPLE]
-            values_i = rx_i_in[clk%4::UPSAMPLE]
-            rx_r_v.append(coef_mult(coef, values_r))
-            rx_i_v.append(coef_mult(coef, values_i))
+            rx_r_v.append(conv_rx(rrcos_fixed, rx_r_in))
+            rx_i_v.append(conv_rx(rrcos_fixed, rx_i_in))
             rx_r_in.insert(0, tx_r_v[-1])
             rx_r_in.pop()
             rx_i_in.insert(0, tx_i_v[-1])
             rx_i_in.pop()
 
+    print prbs_r_v[:10]
+    print tx_r_v[:10]
+    print rx_r_v[:10]
     import pdb; pdb.set_trace()
+    plt.figure(0)
+    plt.plot([i.fValue for i in tx_r_v[:200]])
+    plt.figure(1)
+    plt.plot([i.fValue for i in rx_r_v[:200]])
+    plt.show()
             
 
 
