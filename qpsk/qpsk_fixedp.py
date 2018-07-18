@@ -24,6 +24,15 @@ TX_OFFSET = 0
 DX_SWITCH_SEL = 3
 
 
+FILTER_N_BITS = 8
+FILTER_F_BITS = 7
+
+TX_N_BITS = 8
+TX_F_BITS = 7
+
+RX_N_BITS = 9
+RX_F_BITS = 7
+
 def prbs9(seed):    
     prbs_9 = int((seed & 0x001)>0)
     prbs_5 = int((seed & 0x010)>0)
@@ -34,14 +43,14 @@ def prbs9(seed):
 def conv_tx(coef, values, clk, offset, upsample):
     coef = coef[(clk+offset)%4::upsample]
     values = values[(clk+offset)%4::upsample]
-    out = DeFixedInt(9,7)
+    out = DeFixedInt(TX_N_BITS,TX_F_BITS)
     for c, v in zip(coef, values):
         if v==1: out.value = (out+c).fValue
         else: out.value = (out-c).fValue
     return out
 
 def conv_rx(coef, values):
-    out = DeFixedInt(9,7)
+    out = DeFixedInt(RX_N_BITS,RX_F_BITS)
     for c, v in zip(coef, values):
         out.value = (out+(c*v)).fValue
     return out
@@ -53,7 +62,12 @@ def main():
     rst = 0
     rrcos = rrcosfilter(NBAUDS*UPSAMPLE, ROLL_OFF, 1./BAUD_RATE, SAMPLE_RATE)[1]
     rrcos = rrcos/np.sqrt(UPSAMPLE)
-    rrcos_fixed = arrayFixedInt(8,7,rrcos)
+    rrcos_fixed = arrayFixedInt(FILTER_N_BITS,FILTER_F_BITS,rrcos)
+    rrcos_pot = sum([i**2 for i in rrcos])
+    error_pot = sum([(i.fValue-j)**2 for i,j in zip(rrcos_fixed, rrcos)])
+    snr = 10*np.log10(error_pot/rrcos_pot)
+    print snr
+    symbols = []
 
     vector_r = []
     vector_i = []
@@ -124,6 +138,9 @@ def main():
         if prbs9_enable:
             prbs_r = prbs9(prbs_r)
             prbs_i = prbs9(prbs_i)
+            symbols.append(2*(prbs_r%2)-1)
+        else:
+            symbols.append(0)
         prbs_r_s = prbs_r%2
         prbs_i_s = prbs_i%2
 
@@ -212,8 +229,19 @@ def main():
                 
                 
             
-            
+    tx_float = np.convolve(symbols, rrcos, 'same')       
+    tx_pot = sum([i**2 for i in tx_float])
+    tx_r = [i.fValue for i in tx_r_v[15:]]
+    tx_error_pot = sum([(i-j)**2 for i,j in zip(tx_float, tx_r)])
 
+    print 10*np.log10(tx_error_pot/tx_pot)
+
+    rx_float = np.convolve(tx_float, rrcos, 'same')
+    rx_pot = sum([i**2 for i in rx_float])
+    rx_r = [i.fValue for i in rx_r_v[27:]]
+    rx_error_pot = sum([(i-j)**2 for i,j in zip(rx_float, rx_r)])
+    print 10*np.log10(rx_error_pot/rx_pot)
+    
     plt.figure()
     plt.grid()
     plt.plot([i.fValue for i in tx_r_v[:200]])
