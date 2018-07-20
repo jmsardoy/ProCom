@@ -1,8 +1,9 @@
 `define UPSAMPLE 4
 `define NCOEF 24
 `define COEF_NBITS 8
+`define COEF_FBITS 6
 `define OUT_NBITS 7
-`define OUT_NFBITS 6
+`define OUT_FBITS 6
 
 module tx(
           clk,
@@ -15,8 +16,9 @@ module tx(
     parameter UPSAMPLE = `UPSAMPLE;
     parameter NCOEF = `NCOEF;
     parameter COEF_NBITS = `COEF_NBITS;
+    parameter COEF_FBITS = `COEF_FBITS;
     parameter OUT_NBITS = `OUT_NBITS;
-    parameter OUT_NFBITS = `OUT_NFBITS;
+    parameter OUT_FBITS = `OUT_FBITS;
     parameter COEF = {NCOEF*COEF_NBITS{1'b0}};
 
     localparam BUFFER_IN_SIZE = NCOEF/UPSAMPLE;
@@ -83,12 +85,12 @@ module tx(
                 sat_flag = 1;
         if (sat_flag) begin
             if (tx_out_full[OUT_FULL_NBITS-1])
-                tx_out = { {OUT_NBITS-OUT_NFBITS{1'b1}}, {OUT_NFBITS{1'b0}}};
+                tx_out = { {OUT_NBITS-OUT_NBITS{1'b1}}, {OUT_FBITS{1'b0}}};
             else
-                tx_out = { {OUT_NBITS-OUT_NFBITS{1'b0}}, {OUT_NFBITS{1'b1}}};
+                tx_out = { {OUT_NBITS-OUT_FBITS{1'b0}}, {OUT_FBITS{1'b1}}};
         end
         else
-            tx_out = tx_out_full;
+            tx_out = tx_out_full[COEF_FBITS-OUT_FBITS+OUT_NBITS-1 -: OUT_NBITS-1];
     end
 
 

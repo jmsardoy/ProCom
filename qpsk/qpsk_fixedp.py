@@ -50,7 +50,6 @@ def conv_tx(coef, values, clk, offset, upsample):
         if v==1: out_full.value = (out_full+c).fValue
         else: out_full.value = (out_full-c).fValue
     out.value = out_full.fValue
-    exit()
     return out
 
 def conv_rx(coef, values):
