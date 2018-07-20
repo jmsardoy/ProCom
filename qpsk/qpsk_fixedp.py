@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from commpy.filters import rrcosfilter, rcosfilter
 
 from tool._fixedInt import *
@@ -27,8 +28,8 @@ DX_SWITCH_SEL = 3
 FILTER_N_BITS = 8
 FILTER_F_BITS = 7
 
-TX_N_BITS = 8
-TX_F_BITS = 7
+TX_N_BITS = 7
+TX_F_BITS = 6
 
 RX_N_BITS = 9
 RX_F_BITS = 7
@@ -42,11 +43,14 @@ def prbs9(seed):
 
 def conv_tx(coef, values, clk, offset, upsample):
     coef = coef[(clk+offset)%4::upsample]
-    values = values[(clk+offset)%4::upsample]
+    out_full = DeFixedInt(FILTER_N_BITS+math.ceil(math.log(NBAUDS,2)), 
+                          FILTER_F_BITS)
     out = DeFixedInt(TX_N_BITS,TX_F_BITS)
     for c, v in zip(coef, values):
-        if v==1: out.value = (out+c).fValue
-        else: out.value = (out-c).fValue
+        if v==1: out_full.value = (out_full+c).fValue
+        else: out_full.value = (out_full-c).fValue
+    out.value = out_full.fValue
+    exit()
     return out
 
 def conv_rx(coef, values):
@@ -86,8 +90,8 @@ def main():
             prbs_r = seed_r
             prbs_i = seed_i
             
-            tx_r_in = [0]*NBAUDS*UPSAMPLE
-            tx_i_in = [0]*NBAUDS*UPSAMPLE
+            tx_r_in = [0]*NBAUDS
+            tx_i_in = [0]*NBAUDS
             
             rx_r_in = [DeFixedInt(9,7)]*NBAUDS*UPSAMPLE
             rx_i_in = [DeFixedInt(9,7)]*NBAUDS*UPSAMPLE
@@ -147,25 +151,27 @@ def main():
         #TX (Tiene retardo)
         if tx_enable:
             #actualizo el buffer de entrada
-            tx_r_in.insert(0, prbs_r_p)
-            tx_r_in.pop()
-            tx_i_in.insert(0, prbs_i_p)
-            tx_i_in.pop()
-            
             #realizo las convoluciones
             tx_r_s = conv_tx(rrcos_fixed, tx_r_in, clk, TX_OFFSET, UPSAMPLE)
             tx_i_s = conv_tx(rrcos_fixed, tx_i_in, clk, TX_OFFSET, UPSAMPLE)
 
+            if (clk%UPSAMPLE == 0):
+                tx_r_in.insert(0, prbs_r_p)
+                tx_r_in.pop()
+                tx_i_in.insert(0, prbs_i_p)
+                tx_i_in.pop()
+            
+
         #RX (Tiene retardo)
         if rx_enable:
+            #realizo las convoluciones
+            rx_r_s = conv_rx(rrcos_fixed, rx_r_in)
+            rx_i_s = conv_rx(rrcos_fixed, rx_i_in)
+
             rx_r_in.insert(0, tx_r_p)
             rx_r_in.pop()
             rx_i_in.insert(0, tx_i_p)
             rx_i_in.pop()
-
-            #realizo las convoluciones
-            rx_r_s = conv_rx(rrcos_fixed, rx_r_in)
-            rx_i_s = conv_rx(rrcos_fixed, rx_i_in)
             
 
         #Slicer (No tiene retardo)
@@ -229,6 +235,7 @@ def main():
                 
                 
             
+    import pdb; pdb.set_trace()
     tx_float = np.convolve(symbols, rrcos, 'same')       
     tx_pot = sum([i**2 for i in tx_float])
     tx_r = [i.fValue for i in tx_r_v[15:]]
