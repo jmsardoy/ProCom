@@ -7,7 +7,7 @@ from tool._fixedInt import *
 from tool.DSPtools import *
 
 SEQ_LEN = 511
-NCLK = 1*4*SEQ_LEN
+NCLK = 4*4*SEQ_LEN
 #seed_r = 0b110101010
 #seed_i = 0b111111110
 seed_r = 0x1aa
@@ -28,8 +28,8 @@ DX_SWITCH_SEL = 3
 FILTER_N_BITS = 8
 FILTER_F_BITS = 7
 
-TX_N_BITS = 7
-TX_F_BITS = 6
+TX_N_BITS = 8
+TX_F_BITS = 7
 
 RX_N_BITS = 9
 RX_F_BITS = 7
@@ -234,6 +234,7 @@ def main():
                 
                 
             
+    print [i.value for i in tx_r_v[:20]]
     import pdb; pdb.set_trace()
     tx_float = np.convolve(symbols, rrcos, 'same')       
     tx_pot = sum([i**2 for i in tx_float])
