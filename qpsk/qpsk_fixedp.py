@@ -7,7 +7,7 @@ from tool._fixedInt import *
 from tool.DSPtools import *
 
 SEQ_LEN = 511
-NCLK = 4*4*SEQ_LEN
+NCLK = 1*4*SEQ_LEN
 #seed_r = 0b110101010
 #seed_i = 0b111111110
 seed_r = 0x1aa
@@ -31,8 +31,8 @@ FILTER_F_BITS = 7
 TX_N_BITS = 8
 TX_F_BITS = 7
 
-RX_N_BITS = 9
-RX_F_BITS = 7
+RX_N_BITS = 21
+RX_F_BITS = 14
 
 def prbs9(seed):    
     prbs_9 = int((seed & 0x001)>0)
@@ -53,9 +53,12 @@ def conv_tx(coef, values, clk, offset, upsample):
     return out
 
 def conv_rx(coef, values):
+    out_full = DeFixedInt(2*FILTER_N_BITS+math.ceil(math.log(NBAUDS*UPSAMPLE,2)),
+                          2*FILTER_F_BITS)
     out = DeFixedInt(RX_N_BITS,RX_F_BITS)
     for c, v in zip(coef, values):
-        out.value = (out+(c*v)).fValue
+        out_full.value = (out_full+(c*v)).fValue
+    out.value = out_full.fValue
     return out
     
     
@@ -234,7 +237,7 @@ def main():
                 
                 
             
-    print [i.value for i in tx_r_v[:20]]
+    print [i.fValue for i in rx_r_v[:20]]
     import pdb; pdb.set_trace()
     tx_float = np.convolve(symbols, rrcos, 'same')       
     tx_pot = sum([i**2 for i in tx_float])

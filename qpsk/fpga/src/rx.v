@@ -1,46 +1,39 @@
-`define UPSAMPLE 4
 `define NCOEF 24
 `define COEF_NBITS 8
 `define COEF_FBITS 7
-`define OUT_NBITS 8
-`define OUT_FBITS 7
+`define DATA_NBITS 8
 
-module tx(
+module rx(
           clk,
           rst,
-          tx_in,
-          tx_out
+          rx_in,
+          rx_out
           );
     
 
-    parameter UPSAMPLE = `UPSAMPLE;
     parameter NCOEF = `NCOEF;
     parameter COEF = {NCOEF*COEF_NBITS{1'b0}};
     parameter COEF_NBITS = `COEF_NBITS;
     parameter COEF_FBITS = `COEF_FBITS;
-    parameter OUT_NBITS = `OUT_NBITS;
-    parameter OUT_FBITS = `OUT_FBITS;
+    parameter DATA_NBITS = `DATA_NBITS;
 
-    localparam BUFFER_IN_SIZE = NCOEF/UPSAMPLE;
-    localparam OUT_FULL_NBITS = COEF_NBITS + $clog2(BUFFER_IN_SIZE);
-    localparam OUT_FULL_FBITS = COEF_FBITS;
-    localparam OUT_SHIFT = OUT_NBITS - OUT_FBITS - 1;
+    localparam BUFFER_IN_SIZE = NCOEF;
+    localparam OUT_FULL_NBITS = 2*COEF_NBITS + $clog2(BUFFER_IN_SIZE);
+    localparam OUT_FULL_FBITS = 2*COEF_FBITS;
 
 
     input clk;
     input rst;
-    input tx_in;
+    input [DATA_NBITS-1:0] rx_in;
     
-    output reg[OUT_NBITS-1:0] tx_out;
+    output reg rx_out;
 
 
-    reg signed [OUT_FULL_NBITS-1:0] tx_out_full;
-    reg [BUFFER_IN_SIZE-1:0] buffer_in;
+    reg signed [OUT_FULL_NBITS-1:0] rx_out_full;
+    reg signed [15:0] mult_aux;
+    reg [DATA_NBITS-1:0] buffer_in [BUFFER_IN_SIZE-1:0];
     reg signed [COEF_NBITS-1:0] coeficients [0:NCOEF-1];
-    reg [$clog2(UPSAMPLE)-1:0] clk_counter;
-    reg  sat_flag;
     integer i;
-
 
     assign reset = ~rst;
 
@@ -58,13 +51,13 @@ module tx(
     begin
     
         if(reset) begin
-            clk_counter <= 0;
-            buffer_in <= {BUFFER_IN_SIZE{1'b0}};
+            for(i=0; i<BUFFER_IN_SIZE; i=i+1)
+                buffer_in[i] <= {DATA_NBITS{1'b0}};
         end
         else begin
-            clk_counter <= (clk_counter+1'b1)%UPSAMPLE;
-            if (clk_counter == 0)
-                buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
+            buffer_in[BUFFER_IN_SIZE-1] <= rx_in;
+            for(i=0; i<BUFFER_IN_SIZE-1; i=i+1)
+            buffer_in[i] <= buffer_in[i+1];
         end
     end
 
@@ -72,14 +65,14 @@ module tx(
     always@* 
     begin
         //SUMA
-        tx_out_full = {OUT_FULL_NBITS{1'b0}};
+        rx_out_full = {OUT_FULL_NBITS{1'b0}};
         for (i=0; i<BUFFER_IN_SIZE; i=i+1) begin
-            if(buffer_in[BUFFER_IN_SIZE-1-i])
-                tx_out_full = tx_out_full + coeficients[i*UPSAMPLE+clk_counter];
-            else
-                tx_out_full = tx_out_full - coeficients[i*UPSAMPLE+clk_counter];
+            
+            mult_aux = (buffer_in[BUFFER_IN_SIZE-1-i]*coeficients[i]);
+            rx_out_full = rx_out_full + mult_aux;
         end
 
+        /*
         //SATURACION
         sat_flag = 0;
         for(i=OUT_FULL_FBITS+OUT_SHIFT; i<OUT_FULL_NBITS-1; i=i+1)
@@ -93,6 +86,7 @@ module tx(
         end
         else 
             tx_out = tx_out_full[OUT_FULL_FBITS+OUT_SHIFT : COEF_FBITS - OUT_FBITS];
+        */
     end
 
 
