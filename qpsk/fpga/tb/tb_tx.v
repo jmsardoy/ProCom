@@ -15,9 +15,9 @@ module tb_tx();
 
     initial begin
         rst = 0;
-        clk = 0;
-        clk_prbs = 0;
-        #2 rst = 1;
+        clk = 1;
+        clk_prbs = 1;
+        #8 rst = 1;
     end
 
     always #1 clk = ~clk;

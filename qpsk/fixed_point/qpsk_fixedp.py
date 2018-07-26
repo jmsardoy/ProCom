@@ -22,17 +22,17 @@ SAMPLE_RATE = BAUD_RATE*UPSAMPLE
 
 TX_OFFSET = 0
 
-DX_SWITCH_SEL = 3
+DX_SWITCH_SEL = 2
 
 
-FILTER_N_BITS = 8
+FILTER_N_BITS = 9
 FILTER_F_BITS = 7
 
-TX_N_BITS = 8
+TX_N_BITS = 9
 TX_F_BITS = 7
 
-RX_N_BITS = 21
-RX_F_BITS = 14
+RX_N_BITS = 9
+RX_F_BITS = 7
 
 def prbs9(seed):    
     prbs_9 = int((seed & 0x001)>0)
@@ -55,11 +55,9 @@ def conv_tx(coef, values, clk, offset, upsample):
 def conv_rx(coef, values):
     out_full = DeFixedInt(2*FILTER_N_BITS+math.ceil(math.log(NBAUDS*UPSAMPLE,2)),
                           2*FILTER_F_BITS)
-    out = DeFixedInt(RX_N_BITS,RX_F_BITS)
     for c, v in zip(coef, values):
         out_full.value = (out_full+(c*v)).fValue
-    out.value = out_full.fValue
-    return out
+    return out_full
     
     
     
@@ -87,7 +85,7 @@ def main():
     dx_r_v = []
     dx_i_v = []
 
-    for clk in range(NCLK):
+    for clk in range(0,NCLK):
         if rst == 0:
             prbs_r = seed_r
             prbs_i = seed_i
@@ -130,13 +128,14 @@ def main():
             ber_min_error = 99999
             ber_min_shift = 0
 
-        if clk == 0: rst = 1
+        if clk == 4: rst = 1
 
         #FSM
-        prbs9_enable = (clk % UPSAMPLE == 0)
+        prbs9_enable = ((clk+3) % UPSAMPLE == 0)
         tx_enable = (clk%1==0)
         rx_enable = (clk%1==0)
         dx_enable = ((clk+DX_SWITCH_SEL) % UPSAMPLE == 0)
+        #dx_enable = True
         ber_enable = clk%UPSAMPLE == 0
 
 
@@ -144,9 +143,6 @@ def main():
         if prbs9_enable:
             prbs_r = prbs9(prbs_r)
             prbs_i = prbs9(prbs_i)
-            symbols.append(2*(prbs_r%2)-1)
-        else:
-            symbols.append(0)
         prbs_r_s = prbs_r%2
         prbs_i_s = prbs_i%2
 
@@ -156,32 +152,33 @@ def main():
             #realizo las convoluciones
             tx_r_s = conv_tx(rrcos_fixed, tx_r_in, clk, TX_OFFSET, UPSAMPLE)
             tx_i_s = conv_tx(rrcos_fixed, tx_i_in, clk, TX_OFFSET, UPSAMPLE)
-
-            if (clk%UPSAMPLE == 0):
+            if (clk%UPSAMPLE == 3):
                 tx_r_in.insert(0, prbs_r_p)
                 tx_r_in.pop()
                 tx_i_in.insert(0, prbs_i_p)
                 tx_i_in.pop()
+
             
 
         #RX (Tiene retardo)
         if rx_enable:
+
             #realizo las convoluciones
             rx_r_s = conv_rx(rrcos_fixed, rx_r_in)
             rx_i_s = conv_rx(rrcos_fixed, rx_i_in)
-
             rx_r_in.insert(0, tx_r_p)
             rx_r_in.pop()
             rx_i_in.insert(0, tx_i_p)
             rx_i_in.pop()
+
             
 
         #Slicer (No tiene retardo)
         if dx_enable:
             vector_r.append(rx_r_s.fValue)
             vector_i.append(rx_i_s.fValue)
-            dx_r_s = int(rx_r_s.fValue > 0)
-            dx_i_s = int(rx_i_s.fValue > 0)
+            dx_r_s = int(rx_r_s.fValue >= 0)
+            dx_i_s = int(rx_i_s.fValue >= 0)
         
 
         #BER Counter
@@ -208,7 +205,7 @@ def main():
                     ber_counter = 0
                     ber_error_count = 0
                     ber_shift += 1
-                if ber_shift == 8:
+                if ber_shift == 12:
                     ber_adapt_flag = False
                     ber_error_count = 0
             else:
@@ -237,8 +234,7 @@ def main():
                 
                 
             
-    print [i.fValue for i in rx_r_v[:20]]
-    import pdb; pdb.set_trace()
+    """
     tx_float = np.convolve(symbols, rrcos, 'same')       
     tx_pot = sum([i**2 for i in tx_float])
     tx_r = [i.fValue for i in tx_r_v[15:]]
@@ -251,7 +247,7 @@ def main():
     rx_r = [i.fValue for i in rx_r_v[27:]]
     rx_error_pot = sum([(i-j)**2 for i,j in zip(rx_float, rx_r)])
     print 10*np.log10(rx_error_pot/rx_pot)
-    
+    """
     plt.figure()
     plt.grid()
     plt.plot([i.fValue for i in tx_r_v[:200]])

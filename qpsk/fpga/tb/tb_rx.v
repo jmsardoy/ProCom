@@ -6,9 +6,12 @@ module tb_rx();
     reg rst;
     reg clk;
     reg clk_prbs;
+    reg [1:0] phase;
     wire bit_out;
     wire [7:0] tb_tx_out;
-    wire tx_rx_out;
+    wire tb_rx_out;
+    reg [1:0] clk_counter;
+    reg [31:0] clk_index;
 
     localparam COEF = {8'h0, 8'hfe, 8'hff, 8'h0, 8'h2, 8'h0, 8'hfb, 8'hf5,
                         8'hf9, 8'ha, 8'h25, 8'h3e, 8'h48, 8'h3e, 8'h25, 8'ha, 
@@ -18,11 +21,31 @@ module tb_rx();
         rst = 0;
         clk = 0;
         clk_prbs = 0;
+        clk_counter = 0;
+        clk_index = 0;
+        phase = 2;
         #2 rst = 1;
     end
 
     always #1 clk = ~clk;
-    always #4 clk_prbs = ~clk_prbs;
+
+    always @ (posedge clk or negedge rst) begin
+        if (~rst)
+            clk_index <= 0;
+        else
+            clk_index <= clk_index+1;
+    end
+    //always #4 clk_prbs = ~clk_prbs;
+    always @ (posedge clk or negedge rst) begin
+        if (~rst) 
+            clk_counter <= 0;
+        else
+            clk_counter <= clk_counter+1;
+            if ((clk_counter)%4 == 1)
+                clk_prbs <= 1;
+            else
+                clk_prbs <= 0;
+    end
 
     prbs
         #(
@@ -53,6 +76,7 @@ module tb_rx();
         .clk (clk),
         .rst (rst),
         .rx_in (tb_tx_out),
+        .phase_in (phase),
         .rx_out (tb_rx_out)
         );
 

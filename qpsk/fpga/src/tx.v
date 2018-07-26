@@ -21,7 +21,7 @@ module tx(
     parameter OUT_NBITS = `OUT_NBITS;
     parameter OUT_FBITS = `OUT_FBITS;
 
-    localparam BUFFER_IN_SIZE = NCOEF/UPSAMPLE;
+    localparam BUFFER_IN_SIZE = NCOEF;
     localparam OUT_FULL_NBITS = COEF_NBITS + $clog2(BUFFER_IN_SIZE);
     localparam OUT_FULL_FBITS = COEF_FBITS;
     localparam OUT_SHIFT = OUT_NBITS - OUT_FBITS - 1;
@@ -37,7 +37,7 @@ module tx(
     reg signed [OUT_FULL_NBITS-1:0] tx_out_full;
     reg [BUFFER_IN_SIZE-1:0] buffer_in;
     reg signed [COEF_NBITS-1:0] coeficients [0:NCOEF-1];
-    reg [$clog2(UPSAMPLE)-1:0] clk_counter;
+    reg [$clog2(UPSAMPLE)-1:0] conv_shift;
     reg  sat_flag;
     integer i;
 
@@ -54,17 +54,16 @@ module tx(
     end
 
 
-    always@(posedge clk) 
+    always@(posedge clk or posedge reset) 
     begin
     
         if(reset) begin
-            clk_counter <= 0;
+            conv_shift <= 0;
             buffer_in <= {BUFFER_IN_SIZE{1'b0}};
         end
         else begin
-            clk_counter <= (clk_counter+1'b1)%UPSAMPLE;
-            if (clk_counter == 0)
-                buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
+            conv_shift <= (conv_shift+1'b1)%UPSAMPLE;
+            buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
         end
     end
 
@@ -73,16 +72,16 @@ module tx(
     begin
         //SUMA
         tx_out_full = {OUT_FULL_NBITS{1'b0}};
-        for (i=0; i<BUFFER_IN_SIZE; i=i+1) begin
-            if(buffer_in[BUFFER_IN_SIZE-1-i])
-                tx_out_full = tx_out_full + coeficients[i*UPSAMPLE+clk_counter];
+        for (i=0; i<NCOEF/UPSAMPLE; i=i+1) begin
+            if(buffer_in[BUFFER_IN_SIZE-1-(i*UPSAMPLE+conv_shift)])
+                tx_out_full = tx_out_full + coeficients[i*UPSAMPLE+conv_shift];
             else
-                tx_out_full = tx_out_full - coeficients[i*UPSAMPLE+clk_counter];
+                tx_out_full = tx_out_full - coeficients[i*UPSAMPLE+conv_shift];
         end
 
         //SATURACION
         sat_flag = 0;
-        for(i=OUT_FULL_FBITS+OUT_SHIFT; i<OUT_FULL_NBITS-1; i=i+1)
+        for (i=OUT_FULL_FBITS+OUT_SHIFT; i<OUT_FULL_NBITS-1; i=i+1)
             if(tx_out_full[i]^tx_out_full[i+1])
                 sat_flag = 1;
         if (sat_flag) begin
