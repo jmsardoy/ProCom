@@ -51,17 +51,18 @@ module tx(
     begin
     
         if(reset) begin
-            for (i=0; i<NCOEF; i=i+1)
-            begin
-                coeficients[i] <= COEF[COEF_NBITS*NCOEF -1 -i*COEF_NBITS  -:
-                                       COEF_NBITS];
+            for (i=0; i<NCOEF; i=i+1) begin
+                coeficients[i] <= COEF[COEF_NBITS*NCOEF -1 -i*COEF_NBITS -: COEF_NBITS];
             end
             conv_shift <= 0;
             buffer_in <= {BUFFER_IN_SIZE{1'b0}};
         end
         else begin
             if (enable) begin
-                conv_shift <= (conv_shift+1'b1);
+                if (conv_shift == UPSAMPLE-1)
+                    conv_shift <= 0;
+                else
+                    conv_shift <= (conv_shift+1'b1);
                 buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
             end
         end

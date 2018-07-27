@@ -51,7 +51,7 @@ module ber(
                 buffer_in <= {sx, buffer_in[SEQ_LEN-1:1]};
                 if (adapt_flag) begin
                     if (counter < SEQ_LEN) begin
-                        error_count <= error_count + buffer_in[SEQ_LEN-1-shift] ^ dx;
+                        error_count <= error_count + (buffer_in[SEQ_LEN-1-shift] ^ dx);
                         counter <= counter + 1;
                     end
                     else begin

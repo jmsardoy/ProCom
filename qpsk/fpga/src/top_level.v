@@ -1,16 +1,16 @@
 `timescale 1ns/100ps
 
-`define SEED 9'h1AA
+`define SEED_R 9'h1AA
 `define UPSAMPLE 4
 
-module main(
+module top_level(
             rst,
             CLK100MHZ,
             i_sw,
             o_led
             );
     
-    parameter SEED = `SEED;
+    parameter SEED_R = `SEED_R;
     localparam UPSAMPLE = `UPSAMPLE;
 
     input rst;
@@ -66,7 +66,7 @@ module main(
 
     prbs
         #(
-        .SEED (SEED)
+        .SEED (SEED_R)
         )
     prbs_r(
         .clk (clk),
