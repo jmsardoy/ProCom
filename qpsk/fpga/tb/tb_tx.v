@@ -6,6 +6,9 @@ module tb_tx();
     reg rst;
     reg clk;
     reg clk_prbs;
+    reg enable_prbs;
+    reg enable_tx;
+    reg [1:0] clk_counter;
     wire bit_out;
     wire [8:0] tb_tx_out;
 
@@ -16,20 +19,29 @@ module tb_tx();
     initial begin
         rst = 0;
         clk = 1;
-        clk_prbs = 1;
+        enable_prbs = 0;
+        enable_tx = 1;
+        clk_counter = 0;
         #8 rst = 1;
     end
 
     always #1 clk = ~clk;
-    always #4 clk_prbs = ~clk_prbs;
+    always @ (posedge clk) begin
+        clk_counter = clk_counter+1;
+        if (clk_counter == 0)
+            enable_prbs <= 1;
+        else
+            enable_prbs <= 0;
+    end
 
     prbs
         #(
         .SEED (`SEED)
         )
     prbs_r(
-        .clk (clk_prbs),
+        .clk (clk),
         .rst (rst),
+        .enable (enable_prbs),
         .bit_out (bit_out)
         );
 
@@ -40,6 +52,7 @@ module tb_tx();
     tx_r(
         .clk (clk),
         .rst (rst),
+        .enable (enable_tx),
         .tx_in (bit_out),
         .tx_out (tb_tx_out)
         );

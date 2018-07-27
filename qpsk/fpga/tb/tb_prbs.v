@@ -7,10 +7,12 @@ module tb_prbs();
     reg rst;
     wire bit_out;
     reg clk;
+    reg enable;
 
     initial begin
         rst = 0;
         clk = 0;
+        enable = 1;
         #1 rst = 1;
         #1022 rst = 0;
         #100 rst = 1;
@@ -25,6 +27,7 @@ module tb_prbs();
     prbs_r(
         .clk (clk),
         .rst (rst),
+        .enable (enable),
         .bit_out (bit_out)
         );
    /*

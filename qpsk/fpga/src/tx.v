@@ -8,6 +8,7 @@
 module tx(
           clk,
           rst,
+          enable,
           tx_in,
           tx_out
           );
@@ -29,6 +30,7 @@ module tx(
 
     input clk;
     input rst;
+    input enable;
     input tx_in;
     
     output reg[OUT_NBITS-1:0] tx_out;
@@ -45,38 +47,38 @@ module tx(
     assign reset = ~rst;
 
 
-    initial begin
-        for (i=0; i<NCOEF; i=i+1)
-        begin
-            coeficients[i] <= COEF[COEF_NBITS*NCOEF -1 -i*COEF_NBITS  -:
-                                   COEF_NBITS];
-        end
-    end
-
-
     always@(posedge clk or posedge reset) 
     begin
     
         if(reset) begin
+            for (i=0; i<NCOEF; i=i+1)
+            begin
+                coeficients[i] <= COEF[COEF_NBITS*NCOEF -1 -i*COEF_NBITS  -:
+                                       COEF_NBITS];
+            end
             conv_shift <= 0;
             buffer_in <= {BUFFER_IN_SIZE{1'b0}};
         end
         else begin
-            conv_shift <= (conv_shift+1'b1)%UPSAMPLE;
-            buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
+            if (enable) begin
+                conv_shift <= (conv_shift+1'b1);
+                buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
+            end
         end
     end
 
 
     always@* 
     begin
-        //SUMA
         tx_out_full = {OUT_FULL_NBITS{1'b0}};
-        for (i=0; i<NCOEF/UPSAMPLE; i=i+1) begin
-            if(buffer_in[BUFFER_IN_SIZE-1-(i*UPSAMPLE+conv_shift)])
-                tx_out_full = tx_out_full + coeficients[i*UPSAMPLE+conv_shift];
-            else
-                tx_out_full = tx_out_full - coeficients[i*UPSAMPLE+conv_shift];
+        if (enable) begin
+            //SUMA
+            for (i=0; i<NCOEF/UPSAMPLE; i=i+1) begin
+                if(buffer_in[BUFFER_IN_SIZE-1-(i*UPSAMPLE+conv_shift)])
+                    tx_out_full = tx_out_full + coeficients[i*UPSAMPLE+conv_shift];
+                else
+                    tx_out_full = tx_out_full - coeficients[i*UPSAMPLE+conv_shift];
+            end
         end
 
         //SATURACION
