@@ -46,7 +46,7 @@ module tx(
 
     assign reset = ~rst;
 
-
+  
     always@(posedge clk or posedge reset) 
     begin
     

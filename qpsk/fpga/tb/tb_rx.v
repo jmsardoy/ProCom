@@ -32,14 +32,17 @@ module tb_rx();
     always #1 clk = ~clk;
 
     always @ (posedge clk or negedge rst) begin
-        if (~rst) 
+        if (~rst) begin
             clk_counter <= 0;
-        else
+            enable_prbs <= 0;
+        end
+        else begin
             clk_counter <= clk_counter+1;
             if ((clk_counter)%4 == 0)
                 enable_prbs <= 1;
             else
                 enable_prbs <= 0;
+        end
     end
 
     prbs

@@ -5,14 +5,14 @@ class rx(object):
     def __init__(self, COEF, UPSAMPLE, COEF_NBITS, COEF_FBITS, DATA_NBITS,
                  DATA_FBITS):
         self.UPSAMPLE = UPSAMPLE
+        self.COEF = COEF
         self.COEF_NBITS = COEF_NBITS
         self.COEF_FBITS = COEF_FBITS
         self.DATA_NBITS = DATA_NBITS
         self.DATA_FBITS = DATA_FBITS
-        self.BUFFER_IN_SIZE = len(COEF)
-
-        #initial
-        self.coeficients = COEF
+        self.NCOEF = len(COEF)
+        self.MULT_NBITS = 2*COEF_NBITS
+        self.OUT_FULL_NBITS = self.MULT_NBITS + math.ceil(math.log(self.NCOEF,2))
 
 
     @property
@@ -21,26 +21,44 @@ class rx(object):
         
     @property
     def rx_full_out(self):
-        self._rx_full_out = self.conv()
         return self._rx_full_out
 
     def reset(self):
-        self.buffer_in = [DeFixedInt(self.DATA_NBITS,self.DATA_FBITS)]*self.BUFFER_IN_SIZE
+        #self.buffer_in = [DeFixedInt(self.DATA_NBITS,self.DATA_FBITS)]*self.BUFFER_IN_SIZE
+        self.coeficients = self.COEF
+        self.filter_buffer = [DeFixedInt(self.OUT_FULL_NBITS, self.COEF_FBITS+self.DATA_FBITS)]*self.NCOEF
         self.clk_counter = 0
         self._rx_out = 0
-        self._rx_full_out = self.conv()
+        self._rx_full_out = self.filter_buffer[-1]
 
 
-    def run(self, rx_in, phase_in):
+    def run(self, rx_in, phase_in, enable):
 
-        if (self.clk_counter == phase_in):
-            self._rx_out = int(self.conv().fValue >= 0)
-        self.buffer_in.insert(0,rx_in)
-        self.buffer_in.pop()
-        self.clk_counter = (self.clk_counter+1)%self.UPSAMPLE
+        if enable:
+            if (self.clk_counter == phase_in):
+                self._rx_out = int(self._rx_full_out.fValue >= 0)
+
+            self._rx_full_out = self.filter_buffer[self.NCOEF-1]
+            
+            multiplication = self.multiplication(rx_in)
+            filter_buffer_aux = [0]*self.NCOEF
+            filter_buffer_aux[0] = multiplication[0]
+            for i in range(1,len(self.filter_buffer)):
+                filter_buffer_aux[i] = self.filter_buffer[i-1]+multiplication[i]
+            self.filter_buffer = filter_buffer_aux
+            #self.buffer_in.insert(0,rx_in)
+            #self.buffer_in.pop()
+            self.clk_counter = (self.clk_counter+1)%self.UPSAMPLE
 
 
     #Combinacional
+    def multiplication(self, rx_in):
+        multiplication = []
+        for coef in self.coeficients:
+            multiplication.append(rx_in*coef)
+        return multiplication
+        
+    """
     def conv(self):
         coef = self.coeficients
         values = self.buffer_in
@@ -50,4 +68,4 @@ class rx(object):
         for c, v in zip(coef, values):
             out_full.value = (out_full+(c*v)).fValue
         return out_full
-
+    """

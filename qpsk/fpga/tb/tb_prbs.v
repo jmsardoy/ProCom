@@ -30,25 +30,6 @@ module tb_prbs();
         .enable (enable),
         .bit_out (bit_out)
         );
-   /*
-   ledsOn
-     #(
-       .N_LEDS   (N_LEDS)  ,
-       .NB_SEL   (NB_SEL)  ,
-       .NB_SW    (NB_SW)
-       )
-   u_shiftleds
-     (
-      .o_led     (o_led)    ,
-      .o_led_b   (o_led_b)  ,
-      .o_led_g   (o_led_g)  ,
-      .o_led_r   (o_led_r)  ,
-      .i_sw      (i_sw)     ,
-      .i_btn     (i_btn)    ,
-      .ck_rst    (ck_rst)   ,
-      .CLK100MHZ (CLK100MHZ)
-      );
-      */
 endmodule
 
     

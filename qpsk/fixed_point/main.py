@@ -11,7 +11,7 @@ from rx import rx
 from ber import ber
 
 SEQ_LEN = 511
-NCLK =9*4*SEQ_LEN
+NCLK =1*4*SEQ_LEN
 
 SEED_R = 0x1aa
 SEED_I = 0x1fe
@@ -24,7 +24,7 @@ BAUD_RATE = 25e6
 SAMPLE_RATE = BAUD_RATE*UPSAMPLE
 
 
-DX_SWITCH_SEL = 3
+DX_SWITCH_SEL = 2
 
 COEF_NBITS = 8
 COEF_FBITS = 7
@@ -64,9 +64,19 @@ def main():
     prbs_r_s = prbs_r.prbs_out
     tx_r_s = tx_r.tx_out
     rx_r_s = rx_r.rx_out
+    
+
+    enable_prbs = 0
+    enable_tx = 1
+    enable_rx = 1
+    enable_ber = 0
+
+    counter = 0
 
 
     for i in range(NCLK):
+
+
         prbs_r_s = prbs_r.prbs_out
         tx_r_s = tx_r.tx_out
         rx_r_s = rx_r.rx_out
@@ -77,16 +87,24 @@ def main():
         rx_r_v.append(rx_r_s)
         rx_full_v.append(rx_full_out.fValue)
 
-        if (i%4 == 1):
-            prbs_r.run()
-            ber_r.run(prbs_r_s, rx_r_s)
-        tx_r.run(prbs_r_s)
-        rx_r.run(tx_r_s, phase)
+        prbs_r.run(enable_prbs)
+        ber_r.run(prbs_r_s, rx_r_s, enable_ber)
+        rx_r.run(tx_r_s, phase, enable_rx)
+        tx_r.run(prbs_r_s, enable_tx)
+
+        if counter == 0:
+            enable_prbs = 1
+            enable_ber = 1
+        else:
+            enable_prbs = 0
+            enable_ber = 0
+        counter = (counter+1)%4
 
 
     vector = zip(range(NCLK),prbs_r_v, tx_r_v, rx_full_v, rx_r_v)
-    for i in vector[280:290]:
+    for i in vector[0:20]:
         print i
+    exit()
 
 
     plt.figure()

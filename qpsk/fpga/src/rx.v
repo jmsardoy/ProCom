@@ -22,7 +22,7 @@ module rx(
     parameter DATA_NBITS = `DATA_NBITS;
 
     localparam BUFFER_IN_SIZE = NCOEF;
-    localparam MULT_NBITS = 2*COEF_NBITS+2;
+    localparam MULT_NBITS = 2*COEF_NBITS;
     localparam OUT_FULL_NBITS = 2*COEF_NBITS + $clog2(BUFFER_IN_SIZE);
     localparam OUT_FULL_FBITS = 2*COEF_FBITS;
 
@@ -100,11 +100,11 @@ module rx(
         */
 
         //MULTIPLICACION
-        if (enable) begin
+        //if (enable) begin
             for (i=0; i<NCOEF; i=i+1) begin
                 multiplication[i] = rx_in*coeficients[i];
             end
-        end
+        //end
     end
 
 endmodule

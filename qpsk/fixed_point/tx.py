@@ -17,10 +17,11 @@ class tx(object):
 
 
 
-    def run(self, tx_in):
-        self.buffer_in.insert(0,tx_in)
-        self.buffer_in.pop()
-        self.conv_shift = (self.conv_shift+1)%self.UPSAMPLE
+    def run(self, tx_in, enable):
+        if enable:
+            self.buffer_in.insert(0,tx_in)
+            self.buffer_in.pop()
+            self.conv_shift = (self.conv_shift+1)%self.UPSAMPLE
 
     @property
     def tx_out(self):
