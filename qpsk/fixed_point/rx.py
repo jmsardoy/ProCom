@@ -24,7 +24,6 @@ class rx(object):
         return self._rx_full_out
 
     def reset(self):
-        #self.buffer_in = [DeFixedInt(self.DATA_NBITS,self.DATA_FBITS)]*self.BUFFER_IN_SIZE
         self.coeficients = self.COEF
         self.filter_buffer = [DeFixedInt(self.OUT_FULL_NBITS, self.COEF_FBITS+self.DATA_FBITS)]*self.NCOEF
         self.clk_counter = 0
@@ -46,8 +45,6 @@ class rx(object):
             for i in range(1,len(self.filter_buffer)):
                 filter_buffer_aux[i] = self.filter_buffer[i-1]+multiplication[i]
             self.filter_buffer = filter_buffer_aux
-            #self.buffer_in.insert(0,rx_in)
-            #self.buffer_in.pop()
             self.clk_counter = (self.clk_counter+1)%self.UPSAMPLE
 
 
@@ -58,14 +55,3 @@ class rx(object):
             multiplication.append(rx_in*coef)
         return multiplication
         
-    """
-    def conv(self):
-        coef = self.coeficients
-        values = self.buffer_in
-        out_full = DeFixedInt(2*self.COEF_NBITS\
-                                + math.ceil(math.log(self.BUFFER_IN_SIZE,2)),
-                              2*self.COEF_FBITS)
-        for c, v in zip(coef, values):
-            out_full.value = (out_full+(c*v)).fValue
-        return out_full
-    """

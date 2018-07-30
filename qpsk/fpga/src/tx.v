@@ -37,11 +37,15 @@ module tx(
 
 
     reg signed [OUT_FULL_NBITS-1:0] tx_out_full;
+    reg signed [OUT_FULL_NBITS-1:0] tx_out_full_A;
+    reg signed [OUT_FULL_NBITS-1:0] tx_out_full_B;
     reg [BUFFER_IN_SIZE-1:0] buffer_in;
     reg signed [COEF_NBITS-1:0] coeficients [0:NCOEF-1];
     reg [$clog2(UPSAMPLE)-1:0] conv_shift;
     reg  sat_flag;
     integer i;
+    integer i_b;
+
 
 
     assign reset = ~rst;
@@ -65,24 +69,52 @@ module tx(
                     conv_shift <= (conv_shift+1'b1);
                 buffer_in <= {tx_in, buffer_in[BUFFER_IN_SIZE-1:1]};
             end
+            else begin
+                conv_shift <= conv_shift;
+                buffer_in <= buffer_in;
+            end
         end
     end
 
 
+    //SUMA FINAL
+    always@(posedge clk or posedge reset)
+    begin
+        if (reset) begin
+            tx_out_full <= {OUT_FULL_NBITS{1'b0}};
+        end
+        else
+            tx_out_full <= tx_out_full_A + tx_out_full_B;
+    end
+
+
+
+    //SUMAS PARCIALES
     always@* 
     begin
-        tx_out_full = {OUT_FULL_NBITS{1'b0}};
+        tx_out_full_A = {OUT_FULL_NBITS{1'b0}};
+        tx_out_full_B = {OUT_FULL_NBITS{1'b0}};
         if (enable) begin
-            //SUMA
-            for (i=0; i<NCOEF/UPSAMPLE; i=i+1) begin
+            for (i=0; i<(NCOEF/UPSAMPLE)/2; i=i+1) begin
                 if(buffer_in[BUFFER_IN_SIZE-1-(i*UPSAMPLE+conv_shift)])
-                    tx_out_full = tx_out_full + coeficients[i*UPSAMPLE+conv_shift];
+                    tx_out_full_A = tx_out_full_A + coeficients[i*UPSAMPLE+conv_shift];
                 else
-                    tx_out_full = tx_out_full - coeficients[i*UPSAMPLE+conv_shift];
+                    tx_out_full_A = tx_out_full_A - coeficients[i*UPSAMPLE+conv_shift];
+
+                i_b = i+(NCOEF/UPSAMPLE)/2;
+
+                if(buffer_in[BUFFER_IN_SIZE-1-(i_b*UPSAMPLE+conv_shift)])
+                    tx_out_full_B = tx_out_full_B + coeficients[i_b*UPSAMPLE+conv_shift];
+                else
+                    tx_out_full_B = tx_out_full_B - coeficients[i_b*UPSAMPLE+conv_shift];
             end
         end
+    end
 
-        //SATURACION
+
+    //SATURACION
+    always@*
+    begin
         sat_flag = 0;
         for (i=OUT_FULL_FBITS+OUT_SHIFT; i<OUT_FULL_NBITS-1; i=i+1)
             if(tx_out_full[i]^tx_out_full[i+1])

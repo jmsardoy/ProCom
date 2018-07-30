@@ -30,7 +30,7 @@ module tb_ber();
         enable_ber = 0;
         clk_counter = 0;
         clk_index = 0;
-        phase = 1;
+        phase = 2;
         #2 rst = 1;
     end
 
@@ -47,8 +47,9 @@ module tb_ber();
         if (~rst) 
             clk_counter <= 0;
         else
+        begin
             clk_counter <= clk_counter+1;
-            if ((clk_counter)%4 == 1) begin
+            if ((clk_counter) == 0) begin
                 enable_prbs <= 1;
                 enable_ber <= 1;
             end
@@ -56,6 +57,7 @@ module tb_ber();
                 enable_prbs <= 0;
                 enable_ber <= 0;
             end
+        end
     end
 
     prbs

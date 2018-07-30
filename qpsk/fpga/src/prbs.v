@@ -25,7 +25,7 @@ module prbs(
         end
         else begin
             if (enable) begin
-                buffer <= {buffer[0]^buffer[4]^1'b1 , buffer[8:1]};
+                buffer <= {buffer[0]^buffer[4] , buffer[8:1]};
             end
         end
         
