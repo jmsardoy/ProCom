@@ -21,7 +21,6 @@ module top_level(
 
     wire clk;
     wire enable_tx;
-    wire enable_rx;
     wire error_flag;
     wire prbs_out_r;
     wire [7:0] tx_out_r;
@@ -31,10 +30,11 @@ module top_level(
     reg enable_ber;
     reg [1:0] phase;
     reg ber_rst;
+    reg enable_rx;
 
     assign clk = CLK100MHZ;
     assign enable_tx = i_sw[0];
-    assign enable_rx = i_sw[1];
+    //assign enable_rx = i_sw[1];
 
     assign o_led[0] = enable_tx;
     assign o_led[1] = enable_rx;
@@ -50,8 +50,9 @@ module top_level(
             clk_counter <= 0;
             enable_prbs <= 0;
             enable_ber <= 0;
-            phase <= i_sw[3:2];
+            phase <= 0;
             ber_rst <= 0;
+            enable_rx <= 0;
         end
         else begin
             clk_counter <= clk_counter+1;
@@ -63,8 +64,13 @@ module top_level(
                 enable_prbs <= 0;
                 enable_ber <= 0;
             end
-            if (i_sw[3:2] != phase) begin
-                phase <= i_sw[3:2];
+
+            phase <= i_sw[3:2];
+            enable_rx <= i_sw[1];
+            if ((i_sw[3:2] != phase)) begin
+                ber_rst <= 0;
+            end
+            else if (enable_rx == 0) begin
                 ber_rst <= 0;
             end
             else begin
