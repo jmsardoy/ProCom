@@ -71,14 +71,24 @@ module top_level(
         .usb_uart_txd     (out_tx_uart )   // UART
     );
 
-    /*
+    dsp u_dsp(
+        .rst (in_reset),
+        .clk (clockdsp),
+        .i_sw (i_sw),
+        .o_led (out_leds)
+    );
+
+
+
     ///////////////////////////////////////////
     // Leds
     ///////////////////////////////////////////
+    /*
     assign out_leds[0] = locked;
     assign out_leds[1] = ~in_reset;
     assign out_leds[2] = gpo0[12];
     assign out_leds[3] = gpo0[13];
+    */
 
     assign out_leds_rgb0[0] = gpo0[0];
     assign out_leds_rgb0[1] = gpo0[1];
@@ -98,7 +108,6 @@ module top_level(
 
     assign gpi0[3  : 0] = i_sw;
     assign gpi0[31 : 4] = {28{1'b0}};
-    */
     ///////////////////////////////////////////
     // Register File
     ///////////////////////////////////////////
