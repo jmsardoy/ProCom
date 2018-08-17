@@ -84,7 +84,10 @@ module tx(
             tx_out_full <= {OUT_FULL_NBITS{1'b0}};
         end
         else
-            tx_out_full <= tx_out_full_A + tx_out_full_B;
+            if(enable)
+                tx_out_full <= tx_out_full_A + tx_out_full_B;
+            else
+                tx_out_full <= tx_out_full;
     end
 
 
@@ -94,20 +97,18 @@ module tx(
     begin
         tx_out_full_A = {OUT_FULL_NBITS{1'b0}};
         tx_out_full_B = {OUT_FULL_NBITS{1'b0}};
-        if (enable) begin
-            for (i=0; i<(NCOEF/UPSAMPLE)/2; i=i+1) begin
-                if(buffer_in[BUFFER_IN_SIZE-1-(i*UPSAMPLE+conv_shift)])
-                    tx_out_full_A = tx_out_full_A + coeficients[i*UPSAMPLE+conv_shift];
-                else
-                    tx_out_full_A = tx_out_full_A - coeficients[i*UPSAMPLE+conv_shift];
+        for (i=0; i<(NCOEF/UPSAMPLE)/2; i=i+1) begin
+            if(buffer_in[BUFFER_IN_SIZE-1-(i*UPSAMPLE+conv_shift)])
+                tx_out_full_A = tx_out_full_A + coeficients[i*UPSAMPLE+conv_shift];
+            else
+                tx_out_full_A = tx_out_full_A - coeficients[i*UPSAMPLE+conv_shift];
 
-                i_b = i+(NCOEF/UPSAMPLE)/2;
+            i_b = i+(NCOEF/UPSAMPLE)/2;
 
-                if(buffer_in[BUFFER_IN_SIZE-1-(i_b*UPSAMPLE+conv_shift)])
-                    tx_out_full_B = tx_out_full_B + coeficients[i_b*UPSAMPLE+conv_shift];
-                else
-                    tx_out_full_B = tx_out_full_B - coeficients[i_b*UPSAMPLE+conv_shift];
-            end
+            if(buffer_in[BUFFER_IN_SIZE-1-(i_b*UPSAMPLE+conv_shift)])
+                tx_out_full_B = tx_out_full_B + coeficients[i_b*UPSAMPLE+conv_shift];
+            else
+                tx_out_full_B = tx_out_full_B - coeficients[i_b*UPSAMPLE+conv_shift];
         end
     end
 
