@@ -1,14 +1,17 @@
 `define SEQ_LEN 511
-`define REG_LEN 32
+`define REG_LEN 64
 
 
 module ber(
            clk,
            rst,
            enable,
+           valid,
            sx,
            dx,
-           error_flag
+           error_flag,
+           error_count,
+           bit_count
            );
 
     parameter SEQ_LEN = `SEQ_LEN;
@@ -19,11 +22,13 @@ module ber(
     input clk;
     input rst;
     input enable;
+    input valid;
     input sx;
     input dx;
     output error_flag;
 
-    reg [REG_LEN-1:0] error_count;
+    output reg [REG_LEN-1:0] error_count;
+    output reg [REG_LEN-1:0] bit_count;
     reg [REG_LEN-1:0] min_error_count;
     reg [SHIFT_LEN-1:0] shift;
     reg [SHIFT_LEN-1:0] min_shift;
@@ -39,6 +44,7 @@ module ber(
     begin
         if (reset) begin
             error_count <= {REG_LEN{1'b0}};
+            bit_count <= {REG_LEN{1'b0}};
             min_error_count <= {REG_LEN{1'b1}};
             shift <= {SHIFT_LEN{1'b0}};
             min_shift <= {SHIFT_LEN{1'b0}};
@@ -47,8 +53,9 @@ module ber(
             adapt_flag <= 1;
         end
         else begin
-            if (enable) begin
+            if (enable & valid) begin
                 buffer_in <= {sx, buffer_in[SEQ_LEN-1:1]};
+                //adaptation
                 if (adapt_flag) begin
                     if (counter < SEQ_LEN) begin
                         error_count <= error_count + (buffer_in[SEQ_LEN-1-shift] ^ dx);
@@ -68,8 +75,10 @@ module ber(
                         error_count <= 0;
                     end
                 end
+                //regimen
                 else begin
                     error_count <= error_count + buffer_in[SEQ_LEN-1-min_shift] ^ dx;
+                    bit_count <= bit_count + 1;
                 end
             end
         end

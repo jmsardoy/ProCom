@@ -4,6 +4,7 @@ module prbs(
             clk,
             rst,
             enable,
+            valid,
             bit_out
             );
     parameter SEED = `SEED;
@@ -12,6 +13,7 @@ module prbs(
     input rst;
     input clk;
     input enable;
+    input valid;
 
     reg [8 : 0] buffer;
     wire        reset;
@@ -24,7 +26,7 @@ module prbs(
             buffer <= SEED;
         end
         else begin
-            if (enable) begin
+            if (enable & valid) begin
                 buffer <= {buffer[0]^buffer[4] , buffer[8:1]};
             end
         end
