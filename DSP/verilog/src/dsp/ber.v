@@ -1,4 +1,4 @@
-`define SEQ_LEN 511
+`define SEQ_LEN 1022
 `define REG_LEN 64
 
 
@@ -36,13 +36,11 @@ module ber(
     reg [SEQ_LEN-1:0] buffer_in;
     reg adapt_flag;
 
-    assign reset = ~rst;
-
     assign error_flag = (error_count != 0);
 
-    always@(posedge clk or posedge reset)
+    always@(posedge clk or negedge rst)
     begin
-        if (reset) begin
+        if (!rst) begin
             error_count <= {REG_LEN{1'b0}};
             bit_count <= {REG_LEN{1'b0}};
             min_error_count <= {REG_LEN{1'b1}};

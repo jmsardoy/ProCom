@@ -42,13 +42,11 @@ module rx(
     reg [$clog2(UPSAMPLE)-1:0] clk_counter;
     integer i;
 
-    assign reset = ~rst;
 
-
-    always@(posedge clk) 
+    always@(posedge clk or negedge rst) 
     begin
     
-        if(reset) begin
+        if(!rst) begin
             for (i=0; i<NCOEF; i=i+1) begin
                 coeficients[i] <= COEF[COEF_NBITS*NCOEF -1 -i*COEF_NBITS  -: COEF_NBITS];
             end

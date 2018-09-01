@@ -47,14 +47,10 @@ module tx(
     integer i_b;
 
 
-
-    assign reset = ~rst;
-
-  
-    always@(posedge clk or posedge reset) 
+    always@(posedge clk or negedge rst) 
     begin
     
-        if(reset) begin
+        if(!rst) begin
             for (i=0; i<NCOEF; i=i+1) begin
                 coeficients[i] <= COEF[COEF_NBITS*NCOEF -1 -i*COEF_NBITS -: COEF_NBITS];
             end
@@ -78,9 +74,9 @@ module tx(
 
 
     //SUMA FINAL
-    always@(posedge clk or posedge reset)
+    always@(posedge clk or negedge rst)
     begin
-        if (reset) begin
+        if (!rst) begin
             tx_out_full <= {OUT_FULL_NBITS{1'b0}};
         end
         else

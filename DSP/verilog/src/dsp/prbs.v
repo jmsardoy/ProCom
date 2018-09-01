@@ -16,13 +16,9 @@ module prbs(
     input valid;
 
     reg [8 : 0] buffer;
-    wire        reset;
 
-    assign reset = ~rst;
-
-
-    always@(posedge clk or posedge reset) begin
-        if(reset) begin
+    always@(posedge clk or negedge rst) begin
+        if(!rst) begin
             buffer <= SEED;
         end
         else begin

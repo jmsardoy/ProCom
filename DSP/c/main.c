@@ -6,6 +6,7 @@
 #include "platform.h"
 #include "microblaze_sleep.h"
 #include "uart_manager/uart_manager.h"
+#include "reg_file_manager/reg_file_manager.h"
 
 #define PORT_IN	 		XPAR_AXI_GPIO_0_DEVICE_ID //XPAR_GPIO_0_DEVICE_ID
 #define PORT_OUT 		XPAR_AXI_GPIO_0_DEVICE_ID //XPAR_GPIO_0_DEVICE_ID
@@ -17,32 +18,22 @@
 #define def_LOG_READ            3
 
 
+/*
 XGpio GpioOutput;
 XGpio GpioParameter;
 XGpio GpioInput;
 u32 GPO_Value;
 u32 GPO_Param;
+*/
 
 
 int main()
 {
 	init_platform();
 	int Status;
+
+    reg_file_init();
     //uart_init();
-
-	GPO_Value=0x00000000;
-	GPO_Param=0x00000000;
-
-	Status=XGpio_Initialize(&GpioInput, PORT_IN);
-	if(Status!=XST_SUCCESS){
-        return XST_FAILURE;
-    }
-	Status=XGpio_Initialize(&GpioOutput, PORT_OUT);
-	if(Status!=XST_SUCCESS){
-		return XST_FAILURE;
-	}
-	XGpio_SetDataDirection(&GpioOutput, 1, 0x00000000);
-	XGpio_SetDataDirection(&GpioInput, 1, 0xFFFFFFFF);
 
     unsigned char data_in[256];
     unsigned char data_out[256];
@@ -53,23 +44,12 @@ int main()
     u32 mask;
     uint8_t shift;
     uint8_t color;
-    u32 switch_state;
+    u32 reg_file_out;
 
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00000001);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00800001);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00000001);
+    reg_file_write(REG_OP_TYPE, RESET_CODE, 1); //saco el reset
+    reg_file_write(REG_OP_TYPE, ENABLE_CODE, ENABLE_TX | ENABLE_RX | ENABLE_BER); //enable a todo
+    reg_file_write(REG_OP_TYPE, PHASE_CODE, 2); //seteo la fase
 
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x01000003);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x01800003);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x01000003);
-
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x02000003);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x02800003);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x02000003);
-
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00000000);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00800000);
-    XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00000000);
     while(1){
         /*
         XGpio_DiscreteWrite(&GpioOutput,1, (u32) 0x00000000);

@@ -150,8 +150,6 @@ module top_level(
     assign out_leds_rgb3[1] = 0;
     assign out_leds_rgb3[2] = 0;
 
-    assign gpi0[3  : 0] = i_sw;
-    assign gpi0[31 : 4] = {28{1'b0}};
     ///////////////////////////////////////////
     // Register File
     ///////////////////////////////////////////
