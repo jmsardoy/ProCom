@@ -146,8 +146,8 @@ module top_level(
     assign out_leds_rgb2[1] = 0;
     assign out_leds_rgb2[2] = 0;
 
-    assign out_leds_rgb3[0] = gpo0[9];
-    assign out_leds_rgb3[1] = 0;
+    assign out_leds_rgb3[0] = 0;
+    assign out_leds_rgb3[1] =| gpi0;
     assign out_leds_rgb3[2] = 0;
 
     ///////////////////////////////////////////

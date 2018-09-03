@@ -106,7 +106,7 @@ module register_file(
             enable_reg <= {ENABLE_LEN{1'b0}};
             phase_reg <= 0;
 
-            gpio_out <= 0;
+            gpio_out <= 1;
             bit_count_r_reg <= 0;
             bit_count_i_reg <= 0;
             error_count_r_reg <= 0;

@@ -18,7 +18,7 @@ def main():
     colors_menu_choices = ['---','--b','-g-', '-gb',
                          'r--','r-b','rg-', 'rgb']
     
-    uart = UartManager('/dev/ttyUSB2', 115200)
+    uart = UartManager('/dev/ttyUSB1', 115200)
     
     def strcolor2bits(str_color):
         out_bits = 0x0
@@ -29,7 +29,20 @@ def main():
                 out_bits = out_bits<<1 | 1;
         return out_bits
         
+    uart.send(0, '')
+    uart.send(1, '')
+    uart.send(2, '')
+    uart.send(3, '')
+    from time import sleep
+    sleep(1)
     while(True):
+        device = int(raw_input(":"))
+        uart.send(device, '')
+        print uart.receive()
+        print uart.receive()
+        print uart.receive()
+        print uart.receive()
+        """
         inp = -1
         while inp not in main_menu_choices:
             inp = raw_input(main_menu)
@@ -47,6 +60,7 @@ def main():
         else:
             uart.send(1, '')
             print uart.receive()
+        """
 
 
 if __name__ == '__main__':

@@ -54,6 +54,7 @@ int uart_send(unsigned char *data, uint16_t length, unsigned char device){
         header[1] = 0;
         header[2] = 0;
     }
+    tail = header[0];
     while(XUartLite_IsSending(&uart_module)){}
     XUartLite_Send(&uart_module, header,3);
     while(XUartLite_IsSending(&uart_module)){}

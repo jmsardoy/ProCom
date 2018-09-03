@@ -53,7 +53,8 @@ class UartManager(object):
         if header[0] != tail:
             print "El mensaje contiene errores"
             return
-        return device, ord(data)
+
+        return device, data
 
     def close(self):
         self.ser.close()
