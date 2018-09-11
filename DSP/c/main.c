@@ -58,10 +58,15 @@ int main()
     /////////////////////////////////////////////////////
     unsigned char device = 255;
     unsigned char data[BUFF_LEN];
-    uint64_t bit_error_re;
-    uint64_t bit_count_re; 
-    uint64_t bit_error_im;
-    uint64_t bit_count_im;  
+
+    uint64_t *bit_error_re;
+    bit_error_re = &data[0];
+    uint64_t *bit_count_re;
+    bit_count_re = &data[8];
+    uint64_t *bit_error_im;
+    bit_error_im = &data[16];
+    uint64_t *bit_count_im;
+    bit_count_im = &data[24];
 
     while(1){
         
@@ -116,21 +121,36 @@ int main()
             case SET_PHASE:
                 reg_file_write(REG_OP_TYPE, PHASE_CODE, data);
                 break;
-			case READ_BER :
-				read_ber_counter( &bit_error_re, &bit_count_re, &bit_error_im, &bit_count_im);
-                uart_send( &bit_count_re, 8, 0);
-				uart_send( &bit_error_re, 8, 0);
-				uart_send( &bit_count_im, 8, 0);
-				uart_send( &bit_error_im, 8, 0);
+			case READ_BER : 
+				read_ber_counter(bit_error_re, bit_count_re, bit_error_im, bit_count_im);
+                uart_send(data, 32, 0);
 				break;
 			case LOG :
+
 				// habilitar el o_run del rf
-				reg_file_write(MEM_OP_TYPE, SET_RUN_LOG_CODE, 0);
+				reg_file_write(MEM_OP_TYPE, RUN_CODE, 1);
 				// esperar done
 				wait_mem_done();
-				//leo 1k datos empezando desde la direccion 0 (segundo argumento de la funcion get_1k)
+				reg_file_write(MEM_OP_TYPE, RUN_CODE, 0);
+                //leo la posicion de memoria 1
 				get_1k_data_from_mem(data, 0);
 				uart_send(data, (BUFF_LEN*DATA_NBYTES ), 0);
+                
+                /*
+                reg_file_write(MEM_OP_TYPE, READ_ENABLE_CODE , 1);
+                reg_file_write(MEM_OP_TYPE, READ_ADDR_CODE , 0);
+                reg_file_write(MEM_OP_TYPE, READ_DATA_CODE , 0);
+                u32 caca =  reg_file_read();
+                //reg_file_write(MEM_OP_TYPE, READ_ENABLE_CODE ,0);
+                uart_send(&caca, 4, 0);
+                reg_file_write(MEM_OP_TYPE, READ_ENABLE_CODE ,0);
+                */
+                
+
+
+                /*leo 1k datos empezando desde la direccion 0 (segundo argumento de la funcion get_1k)
+				get_1k_data_from_mem(data, 0);*/
+				//uart_send(data, (BUFF_LEN*DATA_NBYTES ), 0);
 				break;
 			default :
 				break;		

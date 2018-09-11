@@ -59,8 +59,10 @@ int uart_send(unsigned char *data, uint16_t length, unsigned char device){
     XUartLite_Send(&uart_module, header,3);
     while(XUartLite_IsSending(&uart_module)){}
     XUartLite_Send(&uart_module, &(device),1);
-    while(XUartLite_IsSending(&uart_module)){}
-    XUartLite_Send(&uart_module, data,length);
+    for (int i=0; i<length; i++){
+        while(XUartLite_IsSending(&uart_module)){}
+        XUartLite_Send(&uart_module, &data[i], 1);
+    }
     while(XUartLite_IsSending(&uart_module)){}
     XUartLite_Send(&uart_module, &(tail),1);
 

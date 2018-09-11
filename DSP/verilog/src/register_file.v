@@ -12,10 +12,16 @@ module register_file(
         error_count_i,
         bit_count_r,
         bit_count_i,
+        mem_full,
+        mem_data,
 
         reset_reg,
         enable_reg,
-        phase_reg
+        phase_reg,
+
+        run_log_reg,
+        read_enable_reg,
+        read_address_reg
     );
 
     ///////////////////////////////////////////////////////
@@ -30,6 +36,8 @@ module register_file(
     localparam ENABLE_LEN = 3;
     localparam PHASE_LEN = 2;
     localparam LOG_COUNT_LEN = 64;
+    localparam MEM_ADDRESS_LEN = 15;
+    localparam MEM_DATA_LEN = 32;
 
 
     ///////////////////////////////////////////////////////
@@ -58,6 +66,11 @@ module register_file(
     localparam LATCH_COUNTS_CODE        = 'h08;
     //---MEM_LOG_OP_TYPE
     ///////////////////////////////////////////////////////
+    localparam RUN_CODE              = 'h0;
+    localparam READ_ENABLE_CODE      = 'h1;
+    localparam READ_ADDRESS_CODE     = 'h2;
+    localparam READ_DATA_CODE        = 'h3;
+    localparam MEM_DONE_CODE         = 'h4;
 
     ///////////////////////////////////////////////////////
     // MICROBLAZE PORTS
@@ -76,14 +89,22 @@ module register_file(
     input wire [LOG_COUNT_LEN - 1 : 0] error_count_i;
     input wire [LOG_COUNT_LEN - 1 : 0] bit_count_r;
     input wire [LOG_COUNT_LEN - 1 : 0] bit_count_i;
-    output reg                         reset_reg;
-    output reg [ENABLE_LEN - 1 : 0]    enable_reg; //[ber, rx, tx]
-    output reg [PHASE_LEN - 1 : 0]     phase_reg;
+    input wire                         mem_full;
+    input wire [MEM_DATA_LEN - 1 : 0]  mem_data;
+
+    output reg                            reset_reg;
+    output reg [ENABLE_LEN - 1 : 0]       enable_reg; //[ber, rx, tx]
+    output reg [PHASE_LEN - 1 : 0]        phase_reg;
+    output reg                            run_log_reg;
+    output reg                            read_enable_reg;
+    output reg [MEM_ADDRESS_LEN - 1 : 0]  read_address_reg;
 
     reg [LOG_COUNT_LEN - 1 : 0] error_count_r_reg;
     reg [LOG_COUNT_LEN - 1 : 0] error_count_i_reg;
     reg [LOG_COUNT_LEN - 1 : 0] bit_count_r_reg;
     reg [LOG_COUNT_LEN - 1 : 0] bit_count_i_reg;
+
+
     ///////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////
@@ -105,6 +126,9 @@ module register_file(
             reset_reg <= 0;
             enable_reg <= {ENABLE_LEN{1'b0}};
             phase_reg <= 0;
+            run_log_reg <= 0;
+            read_enable_reg <= 0;
+            read_address_reg <= 0;
 
             gpio_out <= 1;
             bit_count_r_reg <= 0;
@@ -141,11 +165,15 @@ module register_file(
                             end
                         endcase
                     end
-                    /*
                     MEM_LOG_OP_TYPE: begin
-
+                        case (code)
+                            RUN_CODE          : run_log_reg <= data[0];
+                            READ_ENABLE_CODE  : read_enable_reg <= data[0];
+                            READ_ADDRESS_CODE : read_address_reg <= data[MEM_ADDRESS_LEN - 1 : 0];
+                            READ_DATA_CODE    : gpio_out <= mem_data;
+                            MEM_DONE_CODE     : gpio_out <= {{GPIO_LEN-1{1'b0}},mem_full};
+                        endcase
                     end
-                    */
                     
                 endcase
             end

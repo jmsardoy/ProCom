@@ -15,11 +15,6 @@
 #define ENABLE_TX  1
 #define ENABLE_RX  2
 #define ENABLE_BER 4
- //LOG_MEM_OP
-#define SET_RUN_LOG_CODE 3
-#define SET_READ_LOG_CODE 4
-#define ADDR_MEM_CODE 5
-#define READ_MEM_DONE_CODE 6
 //COUN_LOG_OP CODES DEFINES
 #define BIT_COUNT_RE_HIGH_CODE    0
 #define BIT_COUNT_RE_LOW_CODE     1
@@ -30,7 +25,12 @@
 #define ERROR_COUNT_IM_HIGH_CODE  6
 #define ERROR_COUNT_IM_LOW_CODE   7
 #define BER_LATCH_CODE      	  8
-
+//LOG_MEM_OP
+#define RUN_CODE         0
+#define READ_ENABLE_CODE 1
+#define READ_ADDR_CODE   2
+#define READ_DATA_CODE   3
+#define MEM_DONE_CODE    4
 
 
 XGpio GpioOutput;

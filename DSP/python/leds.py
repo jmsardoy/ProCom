@@ -1,4 +1,5 @@
 from uart_manager import UartManager
+from time import sleep
 
 
 
@@ -33,35 +34,13 @@ def main():
     uart.send(1, '')
     uart.send(2, '')
     uart.send(3, '')
-    from time import sleep
-    sleep(1)
+    sleep(0.2)
     while(True):
         device = int(raw_input(":"))
         uart.send(device, '')
-        print uart.receive()
-        print uart.receive()
-        print uart.receive()
-        print uart.receive()
-        """
-        inp = -1
-        while inp not in main_menu_choices:
-            inp = raw_input(main_menu)
-        if inp == '0':
-            inp = -1
-            while inp not in leds_menu_choices:
-                inp = raw_input(leds_menu)
-            led_choice = int(inp)
-            while inp not in colors_menu_choices:
-                inp = raw_input(colors_menu)
-            bits = strcolor2bits(inp)
-            data = chr(led_choice<<4 | bits)
-            uart.send(0, data)
-            print "enviado"
-        else:
-            uart.send(1, '')
-            print uart.receive()
-        """
-
+        lala =  uart.receive()
+        print lala
+        print len(lala[1])
 
 if __name__ == '__main__':
     main()

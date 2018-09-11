@@ -60,13 +60,23 @@ module top_level(
     wire                                              clockdsp;
 
 
-    wire reset_dsp;
+    wire         reset_dsp;
     wire [2 : 0] enable_dsp;
     wire [1 : 0] phase_dsp;
+
     wire [63 : 0] error_count_r; 
     wire [63 : 0] error_count_i; 
     wire [63 : 0] bit_count_r; 
     wire [63 : 0] bit_count_i; 
+
+    wire [15 : 0] tx_data;
+    wire [15 : 0] rx_data;
+    wire          run_log;
+    wire          read_log_enable;
+    wire [14 : 0] read_log_address;
+    wire [31 : 0] mem_input_data = {tx_data, rx_data};
+    wire          mem_full;
+    wire [31 : 0] mem_output_data;
 
 
     ///////////////////////////////////////////
@@ -93,10 +103,16 @@ module top_level(
         .error_count_i (error_count_i),
         .bit_count_r (bit_count_r),
         .bit_count_i (bit_count_i),
+        .mem_full(mem_full),
+        .mem_data(mem_output_data),
 
         .reset_reg (reset_dsp),
         .enable_reg (enable_dsp),
-        .phase_reg (phase_dsp)
+        .phase_reg (phase_dsp),
+
+        .run_log_reg(run_log),
+        .read_enable_reg(read_log_enable),
+        .read_address_reg(read_log_address)
     );
 
     dsp u_dsp(
@@ -110,7 +126,20 @@ module top_level(
         .o_error_count_i (error_count_i),
         .o_bit_count_r (bit_count_r),
         .o_bit_count_i (bit_count_i),
+        .o_tx(tx_data),
+        .o_rx(rx_data),
         .o_led (out_leds)
+    );
+
+    mem_log u_mem_log(
+        .clk(clockdsp),
+        .rst(reset_dsp),
+        .i_run(run_log),
+        .i_read(read_log_enable),
+        .i_address(read_log_address),
+        .i_data(mem_input_data),
+        .o_mem_full(mem_full),
+        .o_data(mem_output_data)
     );
 
 
@@ -134,15 +163,15 @@ module top_level(
     assign out_leds_rgb1[1] = gpo0[4];
     assign out_leds_rgb1[2] = gpo0[5];
     */
-    assign out_leds_rgb0[0] = reset_dsp;
+    assign out_leds_rgb0[0] = mem_full;
     assign out_leds_rgb0[1] = 0;
     assign out_leds_rgb0[2] = 0;
 
-    assign out_leds_rgb1[0] = enable_dsp[0];
+    assign out_leds_rgb1[0] = run_log;
     assign out_leds_rgb1[1] = 0;
     assign out_leds_rgb1[2] = 0;
 
-    assign out_leds_rgb2[0] = enable_dsp[1];
+    assign out_leds_rgb2[0] = read_log_enable;
     assign out_leds_rgb2[1] = 0;
     assign out_leds_rgb2[2] = 0;
 
