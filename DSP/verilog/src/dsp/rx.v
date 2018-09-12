@@ -39,11 +39,11 @@ module rx(
     input signed [DATA_NBITS-1:0] rx_in;
     input [$clog2(UPSAMPLE)-1:0] phase_in;
     
-    output reg [OUT_NBITS - 1 : 0] rx_out;
+    output reg signed [OUT_NBITS - 1 : 0] rx_out;
     output reg rx_bit_out;
 
     reg  sat_flag;
-    reg [OUT_FULL_NBITS - 1 : 0] rx_out_full;
+    reg  signed [OUT_FULL_NBITS - 1 : 0] rx_out_full;
 
     reg signed [OUT_FULL_NBITS-1:0] filter_buffer [NCOEF-1:0];
     reg signed [MULT_NBITS-1:0] multiplication [NCOEF-1:0];
@@ -88,8 +88,8 @@ module rx(
                 end
                 if (clk_counter == phase_in) begin
                     rx_bit_out <= ~filter_buffer[NCOEF-1][OUT_FULL_NBITS-1];
-                    rx_out_full <= filter_buffer[NCOEF-1];
                 end
+                rx_out_full <= filter_buffer[NCOEF-1];
             end
             else begin
                 clk_counter <= clk_counter;
@@ -118,7 +118,7 @@ module rx(
                 rx_out = {1'b0, {OUT_NBITS-1{1'b1}}};
         end
         else 
-            rx_out = rx_out_full[OUT_FULL_FBITS+OUT_SHIFT : COEF_FBITS - OUT_FBITS];
+            rx_out = rx_out_full[OUT_FULL_FBITS+OUT_SHIFT : OUT_FULL_FBITS - OUT_FBITS];
     end
 
 

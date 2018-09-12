@@ -163,11 +163,11 @@ module top_level(
     assign out_leds_rgb1[1] = gpo0[4];
     assign out_leds_rgb1[2] = gpo0[5];
     */
-    assign out_leds_rgb0[0] = mem_full;
+    assign out_leds_rgb0[0] = phase_dsp[0];
     assign out_leds_rgb0[1] = 0;
     assign out_leds_rgb0[2] = 0;
 
-    assign out_leds_rgb1[0] = run_log;
+    assign out_leds_rgb1[0] = phase_dsp[1];
     assign out_leds_rgb1[1] = 0;
     assign out_leds_rgb1[2] = 0;
 

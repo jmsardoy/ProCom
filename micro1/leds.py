@@ -1,3 +1,4 @@
+from os import system
 from uart_manager import UartManager
 
 
@@ -30,8 +31,10 @@ def main():
         return out_bits
         
     while(True):
+        system('clear')
         inp = -1
         while inp not in main_menu_choices:
+            system('clear')
             inp = raw_input(main_menu)
         if inp == '0':
             inp = -1

@@ -68,6 +68,8 @@ int main()
     uint64_t *bit_count_im;
     bit_count_im = &data[24];
 
+    char * ack;
+
     while(1){
         
     	uart_receive(data, &device);
@@ -85,41 +87,62 @@ int main()
     			reg_file_write(REG_OP_TYPE, RESET_CODE, 0); //pongo el reset
     			soft_delay(10);
     			reg_file_write(REG_OP_TYPE, RESET_CODE, 1); // saco el reset
+                ack = "ACK: System Reset";
+                uart_send(ack, 18, 0);
 				break;
 			case ENB_TX:
 				enable_reg |= ENABLE_TX;
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Enable Tx";
+                uart_send(ack, 14, 0);
                 break;
 			case ENB_RX:
 				enable_reg |= ENABLE_RX;
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Enable Rx";
+                uart_send(ack, 14, 0);
 				break;
 			case ENB_BER:
 				enable_reg |= ENABLE_BER;
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Enable BER";
+                uart_send(ack, 15, 0);
 				break;
 			case ENB_ALL:
 				enable_reg |= ENABLE_TX | ENABLE_RX | ENABLE_BER;
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Enable ALL";
+                uart_send(ack, 15, 0);
 				break;
 			case DISABLE_TX:
 				enable_reg &= (~ENABLE_TX);
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Disable Tx";
+                uart_send(ack, 15, 0);
 				break;
 			case DISABLE_RX:
 				enable_reg &= (~ENABLE_RX);
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Disable Rx";
+                uart_send(ack, 15, 0);
 				break;
 			case DISABLE_BER:
 				enable_reg &= (~ENABLE_BER);
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Disable BER";
+                uart_send(ack, 16, 0);
 				break;
 			case DISABLE_ALL:
 				enable_reg &= (~(ENABLE_TX | ENABLE_RX | ENABLE_BER));
 				reg_file_write(REG_OP_TYPE, ENABLE_CODE, enable_reg);
+                ack = "ACK: Disable ALL";
+                uart_send(ack, 16, 0);
 				break;
             case SET_PHASE:
-                reg_file_write(REG_OP_TYPE, PHASE_CODE, data);
+                reg_file_write(REG_OP_TYPE, PHASE_CODE, data[0]);
+                ack = "ACK: Set Phase to ";
+                ack[18] = data[0]+48;
+                uart_send(ack, 19, 0);
                 break;
 			case READ_BER : 
 				read_ber_counter(bit_error_re, bit_count_re, bit_error_im, bit_count_im);

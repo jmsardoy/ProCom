@@ -102,20 +102,29 @@ def main():
 
 
     vector = zip(range(NCLK),prbs_r_v, tx_r_v, rx_full_v, rx_r_v)
+    """
     for i in vector[0:20]:
         print i
     exit()
-
+    """
 
     plt.figure()
     plt.grid()
     plt.plot(tx_r_v[:200])
 
-    eyediagram(rx_full_v[12:], 4, 1, UPSAMPLE)
 
     plt.figure()
     plt.grid()
     plt.plot(rx_full_v[:200])
+    rx_a= arrayFixedInt(8,7, rx_full_v[:200])
+    rx_a = [i.fValue for i in rx_a]
+    plt.figure()
+    plt.grid()
+    plt.plot(rx_a)
+
+
+    """
+    eyediagram(rx_full_v[12:], 4, 1, UPSAMPLE)
 
     rrcos_float = [i.fValue for i in rrcos_fixed]
     H,A,F = resp_freq(rrcos_float, 1./BAUD_RATE, 512)
@@ -126,7 +135,7 @@ def main():
     plt.figure()
     plt.grid()
     plt.plot([i.fValue for i in rrcos_fixed])
-
+    """
 
     plt.show()
 

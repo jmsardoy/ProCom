@@ -123,7 +123,7 @@ module tx(
                 tx_out = {1'b0, {OUT_NBITS-1{1'b1}}};
         end
         else 
-            tx_out = tx_out_full[OUT_FULL_FBITS+OUT_SHIFT : COEF_FBITS - OUT_FBITS];
+            tx_out = tx_out_full[OUT_FULL_FBITS+OUT_SHIFT : OUT_FULL_FBITS - OUT_FBITS];
     end
 
 
